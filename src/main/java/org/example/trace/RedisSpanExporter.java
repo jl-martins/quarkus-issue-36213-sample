@@ -1,26 +1,23 @@
 package org.example.trace;
 
+import io.opentelemetry.sdk.autoconfigure.spi.ConfigProperties;
 import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.trace.data.SpanData;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
-import io.quarkus.arc.Unremovable;
-import io.smallrye.config.ConfigMapping;
-import io.smallrye.config.WithDefault;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.subscription.UniSubscriber;
 import io.smallrye.mutiny.subscription.UniSubscription;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
-@ApplicationScoped
-@RequiredArgsConstructor(onConstructor_ = @Inject)
+// N.B.: This class is not a CDI bean because of https://github.com/quarkusio/quarkus/issues/36213
+@RequiredArgsConstructor
 @Slf4j
 public class RedisSpanExporter implements SpanExporter {
     private final RedisSpanExporter.Config config;
@@ -55,11 +52,19 @@ public class RedisSpanExporter implements SpanExporter {
         return CompletableResultCode.ofSuccess();
     }
 
-    @ConfigMapping(prefix = "otel.exporter.redis")
-    public interface Config {
+    @Builder
+    public record Config(int maxConcurrency) {
+        public static final String CONFIG_PREFIX = "otel.exporter.redis";
 
-        @WithDefault("4")
-        int maxConcurrency();
+        public static Config fromProperties(ConfigProperties properties) {
+            return Config.builder()
+                    .maxConcurrency(properties.getInt(configKey("max-concurrency"), 4))
+                    .build();
+        }
+
+        private static String configKey(String propertyName) {
+            return CONFIG_PREFIX + '.' + propertyName;
+        }
     }
 
     private static record ExportSubscriber(CompletableResultCode result) implements UniSubscriber<Integer> {

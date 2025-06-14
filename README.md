@@ -1,15 +1,10 @@
-# Quarkus Issue #36213 sample
+# Quarkus Issue #36213 workaround
 
-Sample project for Quarkus issue [#36213](https://github.com/quarkusio/quarkus/issues/36213).
+This branch gives an example of how a [ConfigurableSpanExporterProvider](https://www.javadoc.io/doc/io.opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.44.1/io/opentelemetry/sdk/autoconfigure/spi/traces/ConfigurableSpanExporterProvider.html)
+can be used to work around the issue described in [the README from the main branch](https://github.com/jl-martins/quarkus-issue-36213-sample/blob/main/README.md).
 
-This project has an example of a custom [SpanExporter](https://javadoc.io/doc/io.opentelemetry/opentelemetry-sdk/1.44.1/io/opentelemetry/sdk/package-summary.html)
-(RedisSpanExporter) that caches OpenTelemetry spans in Redis and a REST resource (TraceResource) to create new traces
-and retrieve them from Redis.
-
-RedisSpanExporter is a CDI bean, which, as of Quarkus 3.23.3, causes Quarkus to use it instead of the [default
-exporter](https://quarkus.io/guides/opentelemetry#default-2). My goal (which I believe to be the same goal as that
-of the author of issue [#36213](https://github.com/quarkusio/quarkus/issues/36213)) is to be able to have a custom span
-exporter that is a CDI bean and can be used alongside the default span exporter instead of replacing it.
+Please refer to the aforementioned README to learn about the main classes in this project and the problem that this
+workaround solves.
 
 ## How to run?
 
@@ -33,12 +28,8 @@ success<sup>*</sup>
    Dev Service Lgtm started, config: {grafana.endpoint=...}
    ```
 
-5. Click `Explore` in the left panel, select "Tempo" in the data source dropdown and search for the trace id - Grafana
-will indicate that the trace could not be found
-6. Delete RedisSpanExporter
-7. Restart the app
-8. Create a new trace and search for it in Grafana - the trace is now shown because the custom span exporter was deleted
-and Quarkus is now using the default span exporter
+5. Click `Explore` in the left panel, select "Tempo" in the data source dropdown and search for the trace id - The trace
+is shown, confirming that the default span exporter is being used alongside RedisSpanExporter
 
 <sup>
 * the trace cache has an expiration time of 10 minutes, so this step must be executed up to 10 minutes after the trace
